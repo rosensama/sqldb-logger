@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -45,6 +46,8 @@ func (l Level) String() string {
 type Logger interface {
 	Log(ctx context.Context, level Level, msg string, data map[string]interface{})
 }
+
+const redacted = "[REDACTED]"
 
 // logger internal logger wrapper
 type logger struct {
@@ -114,6 +117,7 @@ func (l *logger) log(ctx context.Context, lvl Level, msg string, start time.Time
 		data[l.opt.errorFieldname] = err.Error()
 	}
 
+	deleteArgs := false
 	for _, d := range datas {
 		k, v := d()
 
@@ -126,12 +130,30 @@ func (l *logger) log(ctx context.Context, lvl Level, msg string, start time.Time
 			continue
 		}
 
+		if k == l.opt.sqlQueryFieldname {
+			if query, ok := v.(string); ok {
+				for _, r := range l.opt.redactionTriggers {
+					// TODO expensive
+					if strings.Contains(query, r) {
+						deleteArgs = true
+					}
+				}
+			}
+		}
+
 		if k == l.opt.sqlQueryFieldname && l.opt.sqlQueryAsMsg {
 			msg = v.(string)
 			continue
 		}
 
 		data[k] = v
+	}
+
+	if deleteArgs {
+		delete(data, l.opt.sqlArgsFieldname)
+		if l.opt.logArgs {
+			data[l.opt.sqlArgsFieldname] = redacted
+		}
 	}
 
 	l.logger.Log(ctx, lvl, msg, data)

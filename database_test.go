@@ -41,6 +41,36 @@ func TestOpenDriver(t *testing.T) {
 		assert.Equal(t, LevelError.String(), output.Level)
 		assert.Contains(t, output.Data, "errtest")
 	})
+
+	t.Run("With Redaction Triggers", func(t *testing.T) {
+		mockDriver := &driverMock{}
+		mockDriver.On("Open", mock.Anything).Return(&driverConnMock{}, driver.ErrBadConn)
+
+		connIdChars := []string{
+			"0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+			"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+			"n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+			"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+			"N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+		}
+		db := OpenDriver("test", mockDriver, bufLogger, WithErrorFieldname("errtest"),
+			WithSQLQueryFieldname("conn_id"), WithMinimumLevel(LevelDebug), WithRedactionTriggers(connIdChars))
+		_, ok := interface{}(db).(*sql.DB)
+		assert.True(t, ok)
+		err := db.Ping()
+		assert.Error(t, err)
+
+		var output bufLog
+		err = json.Unmarshal(bufLogger.Bytes(), &output)
+		assert.NoError(t, err)
+		assert.Equal(t, "Connect", output.Message)
+		assert.Equal(t, LevelError.String(), output.Level)
+
+		opts := &options{}
+		setDefaultOptions(opts)
+		assert.Contains(t, output.Data[opts.sqlArgsFieldname], redacted)
+	})
+
 }
 
 type driverMock struct {

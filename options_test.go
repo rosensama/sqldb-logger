@@ -312,6 +312,22 @@ func TestWithExecerLevel(t *testing.T) {
 	})
 }
 
+func TestWithRedactionTriggers(t *testing.T) {
+	cfg := &options{}
+	setDefaultOptions(cfg)
+	assert.Nil(t, cfg.redactionTriggers)
+	expected := []string{"password", "Password"}
+	WithRedactionTriggers(expected)(cfg)
+	// same elements
+	assert.Equal(t, expected, cfg.redactionTriggers)
+	// different addresses
+	assert.NotSame(t, expected, cfg.redactionTriggers)
+	// not sharing memory
+	assert.NotEmpty(t, cfg.redactionTriggers)
+	cfg.redactionTriggers[0] = "FAIL ME"
+	assert.NotEqual(t, expected, cfg.redactionTriggers)
+}
+
 var uidBtest = newDefaultUIDDGenerator()
 
 func BenchmarkUniqueID(b *testing.B) {
