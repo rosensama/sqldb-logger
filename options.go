@@ -31,6 +31,7 @@ type options struct {
 	queryerLevel       Level
 	execerLevel        Level
 	redactionTriggers  []string
+	redactedValue      string
 }
 
 // setDefaultOptions called first time before Log() called (see: OpenDriver()).
@@ -58,6 +59,7 @@ func setDefaultOptions(opt *options) {
 	opt.queryerLevel = LevelInfo
 	opt.execerLevel = LevelInfo
 	opt.redactionTriggers = nil
+	opt.redactedValue = "[REDACTED]"
 }
 
 // DurationUnit is total time spent on an actual driver function call calculated by time.Since(start).
@@ -400,5 +402,11 @@ func WithRedactionTriggers(triggers []string) Option {
 	copy(dst, triggers)
 	return func(opt *options) {
 		opt.redactionTriggers = dst
+	}
+}
+
+func WithRedactedValue(value string) Option {
+	return func(opt *options) {
+		opt.redactedValue = value
 	}
 }

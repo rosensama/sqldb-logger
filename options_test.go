@@ -26,6 +26,8 @@ func TestDefaultConfigs(t *testing.T) {
 	assert.Equal(t, "conn_id", cfg.connIDFieldname)
 	assert.Equal(t, "stmt_id", cfg.stmtIDFieldname)
 	assert.Equal(t, "tx_id", cfg.txIDFieldname)
+	assert.Nil(t, cfg.redactionTriggers)
+	assert.Equal(t, "[REDACTED]", cfg.redactedValue)
 }
 
 func TestWithErrorFieldname(t *testing.T) {
@@ -326,6 +328,13 @@ func TestWithRedactionTriggers(t *testing.T) {
 	assert.NotEmpty(t, cfg.redactionTriggers)
 	cfg.redactionTriggers[0] = "FAIL ME"
 	assert.NotEqual(t, expected, cfg.redactionTriggers)
+}
+
+func TestWithRedactedValue(t *testing.T) {
+	cfg := &options{}
+	setDefaultOptions(cfg)
+	WithSQLQueryFieldname("[I WAS SECRET]")(cfg)
+	assert.Equal(t, "[I WAS SECRET]", cfg.sqlQueryFieldname)
 }
 
 var uidBtest = newDefaultUIDDGenerator()

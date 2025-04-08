@@ -68,7 +68,7 @@ func TestOpenDriver(t *testing.T) {
 
 		opts := &options{}
 		setDefaultOptions(opts)
-		assert.Contains(t, output.Data[opts.sqlArgsFieldname], redacted)
+		assert.Contains(t, output.Data[opts.sqlArgsFieldname], opts.redactedValue)
 	})
 
 }

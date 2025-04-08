@@ -47,8 +47,6 @@ type Logger interface {
 	Log(ctx context.Context, level Level, msg string, data map[string]interface{})
 }
 
-const redacted = "[REDACTED]"
-
 // logger internal logger wrapper
 type logger struct {
 	logger Logger
@@ -152,7 +150,7 @@ func (l *logger) log(ctx context.Context, lvl Level, msg string, start time.Time
 	if deleteArgs {
 		delete(data, l.opt.sqlArgsFieldname)
 		if l.opt.logArgs {
-			data[l.opt.sqlArgsFieldname] = redacted
+			data[l.opt.sqlArgsFieldname] = l.opt.redactedValue
 		}
 	}
 
